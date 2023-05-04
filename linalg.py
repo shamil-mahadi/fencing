@@ -244,7 +244,7 @@ class Vector:
 #TODO: Add support for axes that do not pass through origin
 
 class Wireframe:
-    def __init__(self, edges, *vertices, origin=Vector(0,0,0)):
+    def __init__(self, edges, *vertices):
         self.edges = edges
         self.vertices = list(vertices)
         self.acceleration = 0
