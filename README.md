@@ -103,6 +103,14 @@ by using an ordered set of two vectors: the start point and the end point of the
 of the vertices. The `camera_plane_pos` is set to 100 by default. The origin argument indicates the origin of the coordinate plane in the pygame window.
 By default  it's in the top left corner. It is recommended to set it to the centre of the screen.
 
+# Laws of Physics
+The program will be restricted to a simplified model of reality for the sake of our sanity. In this simplification, we will assume there is no air
+resistance. All of Newton's laws apply, except the second one. Acceleration is not considered inversely proportional to mass here. In fact,
+all objects in the system will have equal mass. This will greatly simplify calculations. Second, all sword collisions will be considered elastic,
+given that there will be enough of a force to back up the robot's strike, so that they don't simply bounce off. And in terms of circular motion,
+unlike linear motion, we will allow infinite acceleration, but only over time dt. Afterwards, the object will continue to rotate at a constant
+angular velocity, as per Newton's law.
+
 # Committing
 To ensure highest productivity, please follow the standard git workflow. Don't commit to the main branch directly. Create a new branch with a
 descriptive name clearly showing the change you're working on. Make sure the branch is always up-to-date with the remote repo. Before
