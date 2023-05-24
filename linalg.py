@@ -62,7 +62,10 @@ def get_rotation_to_plane(vector, plane):
             
         return get_rotation_matrix("x", angle)
     elif plane == "xy":
-        angle = atan(vector.z/vector.y)
+        if vector.y:
+            angle = atan(vector.z/vector.y)
+        else:
+            angle = pi/2
         return get_rotation_matrix("x", angle)
     elif plane == "yz":
         angle = atan(vector.x/vector.y)
@@ -154,11 +157,14 @@ class Vector:
     @auto_round
     def z(self, val):
         self.coords[2] = val
-            
+
+    @property
+    def magnitude(self):
+        return sqrt(self.coords.dot(self.coords))
+    
     @property
     def unit_vector(self):
-        magnitude = sqrt(self.coords.dot(self.coords))
-        return self / magnitude
+        return self / self.magnitude
 
     def transform(self, matrix):
         # Consider whether to return new Vector or modify in place.
