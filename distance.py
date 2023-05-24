@@ -1,5 +1,5 @@
-from math import sqrt, cos, pi, tan, atan
-from linalg import Vector, get_rotation_to_plane
+from math import sqrt, cos, pi, tan, atan, asin
+from linalg import Vector
 
 def get_virtual_vector(projection_vector, rotation_vector):
     projection_magnitude = projection_vector.magnitude
@@ -15,9 +15,9 @@ def get_virtual_vector(projection_vector, rotation_vector):
 # TODO: Currently 1D, change to 3D.
 def correct_aberration(aberrated_point, radius):
     projected_length = aberrated_point
-    angle = arcsin(projected_length / radius)
+    angle = asin(projected_length / radius)
     real_length = angle * radius
-    corrected_point = real_length
+    return real_length
 
     
 
