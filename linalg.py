@@ -254,7 +254,7 @@ class Wireframe:
         self.edges = edges
         self.vertices = list(vertices)
         self.acceleration = 0
-        self.velocity = 0
+        self.velocity = Vector(0,0,0)
         self.angular_velocity = 0
         self.a_duration_ticks = 0
         self.r_duration_ticks = 0
@@ -294,10 +294,6 @@ class Wireframe:
             vertex.rotate_about_arbitrary_axis(copy.copy(axis), angle) 
 
     def update(self, dt: float):
-        if self.velocity:
-            ds = self.velocity * dt
-            for vertex in self.vertices:
-                vertex += ds
             
         if self.r_duration_ticks > 0:
             dtheta = self.angular_velocity * dt
@@ -309,6 +305,11 @@ class Wireframe:
             self.a_duration_ticks -= 1
         elif self.a_duration_ticks == 0:
             self.a_duration_ticks = 0
+
+        if self.velocity:
+            ds = self.velocity * dt
+            for i in range(len(self.vertices)):
+                self.vertices[i] += ds
 
     def render_to_pg(self, screen_height: int, origin=Vector(0, 0)):
         lines = []
