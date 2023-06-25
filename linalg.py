@@ -79,6 +79,14 @@ def align_axis_with_z(axis_vector):
     plane_rotation_matrix = get_rotation_matrix("y", angle)
     return plane_rotation_matrix
 
+
+def get_resultant_force(forces):
+    """The previous implementation with np.sum when force arrays were empty."""
+    resultant_force = Vector(0,0,0)
+    for force in forces:
+        resultant_force += force
+    return resultant_force
+
 class Vector:
     @auto_round
     def __init__(self, *args):
@@ -96,7 +104,7 @@ class Vector:
         return str(tuple(coord for coord in self.coords))
 
     def __eq__(self, vector: Vector) -> Boolean:
-        return self.coords == vector.coords
+        return np.all(self.coords == vector.coords)
 
     def __add__(self, vector: Vector) -> Vector:
         return Vector(*(self.coords + vector.coords))
@@ -253,7 +261,8 @@ class Wireframe:
     def __init__(self, edges, *vertices):
         self.edges = edges
         self.vertices = list(vertices)
-        self.acceleration = 0
+        self.forces = []
+        self.acceleration = Vector(0,0,0)
         self.velocity = Vector(0,0,0)
         self.angular_velocity = 0
         self.a_duration_ticks = 0
@@ -269,9 +278,25 @@ class Wireframe:
             new_vertices.append(vertex + val)
         return Wireframe(self.edges, *new_vertices)
 
+    def add_force(self, force: Vector, dt: float):
+        self.forces.append(force)
+        self.acceleration += force # Assuming m=1
+
+    def remove_force(self, i): # Consider changing to implicit setter function of self.forces list
+        self.acceleration -= self.forces[i]
+        del self.forces[i]
+
+    def clear_forces(self):
+        self.forces = []
+        self.acceleration = Vector(0,0,0)
+        
     def apply_acceleration(self, acceleration: Vector, duration: float, dt: float):
-        self.acceleration = acceleration
-        self.a_duration_ticks = duration / dt
+        """Deprecated"""
+        if self.acceleration == Vector(0,0,0):
+            self.acceleration = acceleration
+            self.a_duration_ticks = duration / dt
+        else:
+            self.acceleration += acceleration
 
     def apply_velocity(self, velocity: Vector, duration: int):
         """This is a deprecated function. Please avoid using this whenever possible.
@@ -295,17 +320,13 @@ class Wireframe:
 
     def update(self, dt: float):
             
-        if self.r_duration_ticks > 0:
+        if self.angular_velocity:
             dtheta = self.angular_velocity * dt
             self.rotate(self.axis, dtheta)
-            self.r_duration_ticks -= 1
-
-        if self.a_duration_ticks > 0:
+            
+        if self.acceleration != Vector(0,0,0):
             self.velocity += self.acceleration
-            self.a_duration_ticks -= 1
-        elif self.a_duration_ticks == 0:
-            self.a_duration_ticks = 0
-
+    
         if self.velocity:
             ds = self.velocity * dt
             for i in range(len(self.vertices)):
@@ -318,8 +339,6 @@ class Wireframe:
             end_point = self.vertices[edge[1]].project(100) + origin
             lines.append((start_point.to_pg(screen_height), end_point.to_pg(screen_height)))
         return lines
-
-
 
 # Below is legacy code. Overall, the new Linear Algebra API is much more dynamic, but at the cost of speed.
 # The additional boilerplate adds a significant amount of delay in the creation of new Vectors. However, the API
