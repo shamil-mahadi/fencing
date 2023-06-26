@@ -81,7 +81,7 @@ def align_axis_with_z(axis_vector):
 
 
 def get_resultant_force(forces):
-    """The previous implementation with np.sum when force arrays were empty."""
+    """The previous implementation with np.sum failed when force arrays were empty."""
     resultant_force = Vector(0,0,0)
     for force in forces:
         resultant_force += force
@@ -228,7 +228,7 @@ class Vector:
             raise Exception("Only 2D vectors may be drawn via pygame.")
         return pg.Vector2(self.x, screen_height - self.y)
 
-    def project(self, camera_plane_pos):
+    def project(self, eye_position_vector, camera_plane_distance):
         """This is a weak perspective projection. Would be nicer with strong projection, but it's complicated
          and I really didn't feel the need to bother learning it. Weak works just fine.
          Eye is assumed to be at origin, and the z axis goes through
@@ -243,19 +243,25 @@ class Vector:
          add a lot of overhead.
         """
 
-        # This is a rare instance of me using a magic number.
-        # TODO: move to globals module.
-        self += Vector(0,0,600)
-        
-        try:
-            scaled_vector = self / self.z * camera_plane_pos
-            return Vector(scaled_vector.x, scaled_vector.y)
-        except AttributeError:
-            raise Exception("Only 3D vectors can be projected.")
+        normal_vector = eye_position_vector * (1 - camera_plane_distance/eye_position_vector.magnitude)
+        ray_vector = eye_position_vector - self
+        x1, y1, z1 = normal_vector.coords
+        x2, y2, z2 = ray_vector.coords
+        x3, y3, z3 = self.coords
+        ray_scale_factor = (x1**2 + y1**2 + z1**2 - x1*x3 - y1*y3 - z1*z3)/(x1*x2 + y1*y2 + z1*z2)
+        ray_vector = ray_vector * ray_scale_factor
+        intersection_vector = self + ray_vector
+        #if self.coords.dot(normal_vector.coords) < normal_vector.coords.dot(normal_vector.coords):
+        projected_vector = intersection_vector - normal_vector
+        camera_z_axis = Vector(0, 0, 0) - normal_vector.unit_vector
+        xz_plane_rotation = get_rotation_to_plane(camera_z_axis, "xz")
+        camera_z_axis.transform(xz_plane_rotation)
+        z_axis_alignment = align_axis_with_z(camera_z_axis)
+        #camera_z_axis.transform(z_axis_alignment)
+        alignment_matrix = z_axis_alignment.dot(xz_plane_rotation)
+        projected_vector.transform(alignment_matrix)
+        return Vector(projected_vector.x, projected_vector.y)
 
-
-
-#TODO: Add support for axes that do not pass through origin
 
 class Wireframe:
     def __init__(self, edges, *vertices):
@@ -316,7 +322,7 @@ class Wireframe:
             # Otherwise, the axis vector needs correction transformations at the end of each arbitrary rotation.
             # Copying is the best solution here, as far as I can see, because the other solution is to
             # make Vector.transform() return a new Vector, which is a heavy process.
-            vertex.rotate_about_arbitrary_axis(copy.copy(axis), angle) 
+            vertex.rotate_about_arbitrary_axis(copy.copy(axis), angle)
 
     def update(self, dt: float):
             
@@ -332,11 +338,11 @@ class Wireframe:
             for i in range(len(self.vertices)):
                 self.vertices[i] += ds
 
-    def render_to_pg(self, screen_height: int, origin=Vector(0, 0)):
+    def render_to_pg(self, screen_height: int, eye_position_vector, camera_plane_distance_ratio, projection_origin=Vector(0, 0)):
         lines = []
         for edge in self.edges:
-            start_point = self.vertices[edge[0]].project(100) + origin
-            end_point = self.vertices[edge[1]].project(100) + origin
+            start_point = self.vertices[edge[0]].project(eye_position_vector, camera_plane_distance_ratio) + projection_origin
+            end_point = self.vertices[edge[1]].project(eye_position_vector, camera_plane_distance_ratio) + projection_origin
             lines.append((start_point.to_pg(screen_height), end_point.to_pg(screen_height)))
         return lines
 
