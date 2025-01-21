@@ -1,11 +1,3 @@
-"""
-Copyright 2023 Team <name>
-This code is intended solely for use at Bangladesh Robotics Olympiad
-by Team <name> consisting of Khandoker Shamil Mahadi bin Khalid, Namia
-Rauzat, and Tasin Mahamud. Unauthorized reproduction or usage of this code
-beyond the intended context is strictly prohibited.
-"""
-
 from __future__ import annotations
 from math import cos, sin, atan, pi, sqrt
 import copy
